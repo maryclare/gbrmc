@@ -6,8 +6,10 @@
 #' @export
 sampler <- function(y, X, sigma.sq, tau.sq, q = 2, print.iter = FALSE,
                     means, Vars, nu = NULL, samps, type = "linear",
-                    offset = rep(0, length(y)), reset = FALSE,
-                    gamma.means = rep(0, ncol(X)), gamma.sds = rep(1, ncol(X)),
+                    offset = rep(0, length(y)),
+                    reset = FALSE,
+                    gamma.means = rep(0, ncol(X)),
+                    gamma.sds = rep(1, ncol(X)),
                     max.iter.cd = 100, z.start = rep(0, ncol(X)),
                     joint = FALSE, pappr = 0,
                     a = NULL, B = NULL) {
@@ -72,7 +74,7 @@ likpriprop <- function(y, gamma,
                        means, Vars.rt, nu, type,
                        offset = rep(0, length(y)),
                        gamma.means, gamma.sds, pappr,
-                       a, B) {
+                       a, B, incprop = TRUE) {
   beta <- gammatobeta(gamma = gamma, means = means, Vars.rt = Vars.rt,
                       gamma.means = gamma.means, gamma.sds = gamma.sds)
   Xbeta <- X%*%beta + offset
@@ -86,12 +88,15 @@ likpriprop <- function(y, gamma,
     llik <- sum(y*log(probs) + (1 - y)*log(1 - probs))
   }
   lprior <- -(gamma(3/q)/gamma(1/q))^(q/2)*sum(abs(beta/tau)^q)
-  if (is.null(nu)) {
-    lpro <-  sum(gamma^2)/2
-  } else {
-    lpro <- sum((nu + 1)*log(1 + (gamma^2)/((nu - 2)))/2)
+  logscale <- (1 - pappr)*(llik + lprior)
+  if (incprop) {
+    if (is.null(nu)) {
+      lpro <-  sum(gamma^2)/2
+    } else {
+      lpro <- sum((nu + 1)*log(1 + (gamma^2)/((nu - 2)))/2)
+    }
+    logscale <- logscale + lpro
   }
-  logscale <- (1 - pappr)*(llik + lprior) + lpro
   if (pappr != 0) {
     logscale <- logscale + pappr*(-sum(t(beta - a)%*%solve(B)%*%(beta - a))/2)
   }
@@ -121,7 +126,7 @@ sliceztheta <- function(z, nu, theta, y, X, sig, q, tau,
   delta <- z
 
   new <- ifelse(is.null(nu), 1, sqrt((nu - 2)/nu))*rnorm(p)/ifelse(is.null(nu), 1,
-                                                                 sqrt(rgamma(length(nu), nu/2, nu/2)))
+                                                                   sqrt(rgamma(length(nu), nu/2, nu/2)))
   v0 <- delta*sin(theta) + new*cos(theta)
   v1 <- delta*cos(theta) - new*sin(theta)
 
@@ -129,12 +134,12 @@ sliceztheta <- function(z, nu, theta, y, X, sig, q, tau,
   z.new <- v0*sin(theta.new) + v1*cos(theta.new)
   for (j in 1:length(theta)) {
     l <- runif(1, 0, likpriprop(y = y, gamma = z.new,
-                              X = X, sig = sig, q = q, tau = tau,
-                              means = means,
-                              Vars.rt = Vars.rt, nu = nu, type = type,
-                              offset = offset, gamma.means = gamma.means,
-                              gamma.sds = gamma.sds, pappr = pappr,
-                              a = avec, B = B))
+                                X = X, sig = sig, q = q, tau = tau,
+                                means = means,
+                                Vars.rt = Vars.rt, nu = nu, type = type,
+                                offset = offset, gamma.means = gamma.means,
+                                gamma.sds = gamma.sds, pappr = pappr,
+                                a = avec, B = B))
     a <- 0
     b <- 2*pi
 
@@ -142,18 +147,18 @@ sliceztheta <- function(z, nu, theta, y, X, sig, q, tau,
     z.new <- v0*sin(theta.new) + v1*cos(theta.new)
 
     while (likpriprop(y = y, gamma = z.new,
-                    X = X, sig = sig, q = q, tau = tau,
-                    means = means, Vars.rt = Vars.rt, nu = nu, type = type,
-                    offset = offset, gamma.means = gamma.means,
-                    gamma.sds = gamma.sds, pappr = pappr,
-                    a = avec, B = B) < l) {
-    if (theta.new[j] < theta[j]) {
-      a <- theta.new[j]
-    } else {
-      b <- theta.new[j]
-    }
-    theta.new[j] <- runif(1, a, b)
-    z.new <- v0*sin(theta.new) + v1*cos(theta.new)
+                      X = X, sig = sig, q = q, tau = tau,
+                      means = means, Vars.rt = Vars.rt, nu = nu, type = type,
+                      offset = offset, gamma.means = gamma.means,
+                      gamma.sds = gamma.sds, pappr = pappr,
+                      a = avec, B = B) < l) {
+      if (theta.new[j] < theta[j]) {
+        a <- theta.new[j]
+      } else {
+        b <- theta.new[j]
+      }
+      theta.new[j] <- runif(1, a, b)
+      z.new <- v0*sin(theta.new) + v1*cos(theta.new)
     }
   }
   theta <- theta.new
