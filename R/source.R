@@ -70,7 +70,8 @@ likpriprop <- function(y, gamma,
                        X, sig, q = 2, tau,
                        means, Vars.rt, nu = NULL, type = "linear",
                        offset = rep(0, length(y)),
-                       gamma.means, gamma.sds, pappr = 0) {
+                       gamma.means, gamma.sds, pappr = 0,
+                       a = NULL, B = NULL) {
   beta <- gammatobeta(gamma = gamma, means = means, Vars.rt = Vars.rt,
                       gamma.means = gamma.means, gamma.sds = gamma.sds)
   Xbeta <- X%*%beta + offset
@@ -91,7 +92,7 @@ likpriprop <- function(y, gamma,
   }
   logscale <- (1 - pappr)*(llik + lprior + lpro)
   if (pappr != 0) {
-    logscale <- logscale + pappr*(-sum((solve(Vars.rt)%*%(beta - means))^2)/2)
+    logscale <- logscale + pappr*(-sum((beta - a)%*%solve(B)%*%(beta - a))/2)
   }
   exp(logscale)
 }
