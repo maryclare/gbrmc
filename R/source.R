@@ -70,11 +70,14 @@ sampler <- function(y, X, sigma.sq, tau.sq, q = 2, print.iter = FALSE,
 #'
 #' @export
 likpriprop <- function(y, gamma,
-                       X, sig, q, tau,
-                       means, Vars.rt, nu, type,
+                       X, sig, q = 2, tau,
+                       means, Vars.rt,
+                       nu = NULL, type = "linear",
                        offset = rep(0, length(y)),
-                       gamma.means, gamma.sds, pappr,
-                       a, B, incprop = TRUE) {
+                       gamma.means = rep(0, length(gamma)),
+                       gamma.sds = rep(1, length(gamma)), pappr = 0,
+                       a = rep(0, length(gamma)), B = diag(length(gamma)),
+                       incprop = TRUE) {
   beta <- gammatobeta(gamma = gamma, means = means, Vars.rt = Vars.rt,
                       gamma.means = gamma.means, gamma.sds = gamma.sds)
   Xbeta <- X%*%beta + offset
