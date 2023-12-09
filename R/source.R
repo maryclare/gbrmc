@@ -45,7 +45,7 @@ sampler <- function(y, X, sigma.sq, tau.sq, q = 2, print.iter = FALSE,
     theta <- slice$theta
     gammas[i, ] <- z
     thetas[i, ] <- theta
-    betas[i, ] <- gammatobeta(gamma = gammas[i, ], mean = means,
+    betas[i, ] <- gammatobeta(gamma = gammas[i, ], means = means,
                               Vars.rt = Vars.rt,
                               gamma.means = gamma.means, gamma.sds = gamma.sds)
   }
@@ -68,10 +68,10 @@ sampler <- function(y, X, sigma.sq, tau.sq, q = 2, print.iter = FALSE,
 #' @export
 likpriprop <- function(y, gamma,
                        X, sig, q = 2, tau,
-                       mean, Vars.rt, nu = NULL, type = "linear",
+                       means, Vars.rt, nu = NULL, type = "linear",
                        offset = rep(0, length(y)),
                        gamma.means, gamma.sds, pappr = 0) {
-  beta <- gammatobeta(gamma = gamma, mean = mean, Vars.rt = Vars.rt,
+  beta <- gammatobeta(gamma = gamma, means = means, Vars.rt = Vars.rt,
                       gamma.means = gamma.means, gamma.sds = gamma.sds)
   Xbeta <- X%*%beta + offset
   if (type == "linear") {
@@ -101,7 +101,8 @@ likpriprop <- function(y, gamma,
 #' @description Transforms gammas to betas
 #'
 #' @export
-gammatobeta <- function(gamma, means, Vars.rt, gamma.means, gamma.sds) {
+gammatobeta <- function(gamma, means, Vars.rt,
+                        gamma.means, gamma.sds) {
   Vars.rt%*%(gamma.sds*gamma + gamma.means) + means
 }
 
@@ -110,7 +111,8 @@ gammatobeta <- function(gamma, means, Vars.rt, gamma.means, gamma.sds) {
 #' @description Performs the slice sampling step
 #'
 #' @export
-sliceztheta <- function(z, nu, theta, y, X, sig, q, tau, means, Vars.rt, type,
+sliceztheta <- function(z, nu, theta, y, X, sig, q, tau,
+                        means, Vars.rt, type,
                         offset, gamma.means, gamma.sds, pappr = 0) {
   p <- length(z)
   delta <- z
@@ -125,7 +127,7 @@ sliceztheta <- function(z, nu, theta, y, X, sig, q, tau, means, Vars.rt, type,
   for (j in 1:length(theta)) {
     l <- runif(1, 0, likpriprop(y = y, gamma = z.new,
                               X = X, sig = sig, q = q, tau = tau,
-                              mean = means,
+                              means = means,
                               Vars.rt = Vars.rt, nu = nu, type = type,
                               offset = offset, gamma.means = gamma.means,
                               gamma.sds = gamma.sds, pappr = pappr))
@@ -137,7 +139,7 @@ sliceztheta <- function(z, nu, theta, y, X, sig, q, tau, means, Vars.rt, type,
 
     while (likpriprop(y = y, gamma = z.new,
                     X = X, sig = sig, q = q, tau = tau,
-                    mean = means, Vars.rt = Vars.rt, nu = nu, type = type,
+                    means = means, Vars.rt = Vars.rt, nu = nu, type = type,
                     offset = offset, gamma.means = gamma.means,
                     gamma.sds = gamma.sds, pappr = pappr) < l) {
     if (theta.new[j] < theta[j]) {
