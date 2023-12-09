@@ -93,7 +93,7 @@ likpriprop <- function(y, gamma,
   }
   logscale <- (1 - pappr)*(llik + lprior + lpro)
   if (pappr != 0) {
-    logscale <- logscale + pappr*(-sum((beta - a)%*%solve(B)%*%(beta - a))/2)
+    logscale <- logscale + pappr*(-sum(t(beta - a)%*%solve(B)%*%(beta - a))/2)
   }
   exp(logscale)
 }
