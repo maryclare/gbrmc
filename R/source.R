@@ -9,7 +9,8 @@ sampler <- function(y, X, sigma.sq, tau.sq, q = 2, print.iter = FALSE,
                     offset = rep(0, length(y)), reset = FALSE,
                     gamma.means = rep(0, ncol(X)), gamma.sds = rep(1, ncol(X)),
                     max.iter.cd = 100, z.start = rep(0, ncol(X)),
-                    joint = FALSE, pappr = 0) {
+                    joint = FALSE, pappr = 0,
+                    a = NULL, B = NULL) {
 
   p <- ncol(X)
   Vars.orig <- Vars
@@ -40,7 +41,7 @@ sampler <- function(y, X, sigma.sq, tau.sq, q = 2, print.iter = FALSE,
                          means = means, Vars.rt = Vars.rt, type = type,
                          offset = offset,
                          gamma.means = gamma.means, gamma.sds = gamma.sds,
-                         pappr = pappr)
+                         pappr = pappr, a = a, B = B)
     z <- slice$z
     theta <- slice$theta
     gammas[i, ] <- z
@@ -67,11 +68,11 @@ sampler <- function(y, X, sigma.sq, tau.sq, q = 2, print.iter = FALSE,
 #'
 #' @export
 likpriprop <- function(y, gamma,
-                       X, sig, q = 2, tau,
-                       means, Vars.rt, nu = NULL, type = "linear",
+                       X, sig, q, tau,
+                       means, Vars.rt, nu, type,
                        offset = rep(0, length(y)),
-                       gamma.means, gamma.sds, pappr = 0,
-                       a = NULL, B = NULL) {
+                       gamma.means, gamma.sds, pappr,
+                       a, B) {
   beta <- gammatobeta(gamma = gamma, means = means, Vars.rt = Vars.rt,
                       gamma.means = gamma.means, gamma.sds = gamma.sds)
   Xbeta <- X%*%beta + offset
@@ -114,7 +115,8 @@ gammatobeta <- function(gamma, means, Vars.rt,
 #' @export
 sliceztheta <- function(z, nu, theta, y, X, sig, q, tau,
                         means, Vars.rt, type,
-                        offset, gamma.means, gamma.sds, pappr = 0) {
+                        offset, gamma.means, gamma.sds, pappr,
+                        a, B) {
   p <- length(z)
   delta <- z
 
@@ -131,7 +133,8 @@ sliceztheta <- function(z, nu, theta, y, X, sig, q, tau,
                               means = means,
                               Vars.rt = Vars.rt, nu = nu, type = type,
                               offset = offset, gamma.means = gamma.means,
-                              gamma.sds = gamma.sds, pappr = pappr))
+                              gamma.sds = gamma.sds, pappr = pappr,
+                              a = a, B = B))
     a <- 0
     b <- 2*pi
 
@@ -142,7 +145,8 @@ sliceztheta <- function(z, nu, theta, y, X, sig, q, tau,
                     X = X, sig = sig, q = q, tau = tau,
                     means = means, Vars.rt = Vars.rt, nu = nu, type = type,
                     offset = offset, gamma.means = gamma.means,
-                    gamma.sds = gamma.sds, pappr = pappr) < l) {
+                    gamma.sds = gamma.sds, pappr = pappr,
+                    a = a, B = B) < l) {
     if (theta.new[j] < theta[j]) {
       a <- theta.new[j]
     } else {
